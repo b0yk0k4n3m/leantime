@@ -1,0 +1,60 @@
+version: '3.3'
+
+services:
+  leantime_db:
+    image: mysql:8.4
+    container_name: mysql_leantime
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    networks:
+      - leantime-net
+    command: --character-set-server=UTF8MB4 --collation-server=UTF8MB4_unicode_ci
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  leantime:
+    build: .                                            # ĐIỂM QUAN TRỌNG: Tự build từ mã nguồn đã custom của bạn
+    container_name: app_leantime
+    restart: unless-stopped
+    environment:
+      LEAN_DB_HOST: leantime_db                         # Phải trỏ đúng tên service database ở trên
+      LEAN_DB_USER: ${LEAN_DB_USER}
+      LEAN_DB_PASSWORD: ${LEAN_DB_PASSWORD}
+      LEAN_DB_DATABASE: ${LEAN_DB_DATABASE}
+    security_opt:
+      - no-new-privileges:true
+    cap_add:
+      - CAP_CHOWN
+      - CAP_SETGID
+      - CAP_SETUID
+    ports:
+      - "3006:8080"                                     # Port chuẩn của bản Leantime mới
+    networks:
+      - leantime-net
+    volumes:
+      - public_userfiles:/var/www/html/public/userfiles # Lưu logo, file public
+      - userfiles:/var/www/html/userfiles               # Lưu file đính kèm của task
+      - plugins:/var/www/html/app/Plugins               # Lưu các plugin tải thêm
+      - logs:/var/www/html/storage/logs                 # Lưu file ghi lỗi
+    depends_on:
+      leantime_db:
+        condition: service_healthy
+
+volumes:
+  db_data:
+  userfiles:
+  public_userfiles:
+  plugins:
+  logs:
+
+networks:
+  leantime-net:
