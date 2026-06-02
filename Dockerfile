@@ -1,10 +1,12 @@
-# 1. Dùng bản Leantime chính thức làm nền tảng (đã cài sẵn mọi thư viện, framework)
-FROM leantime/leantime:latest
+# 1. Dùng bản Leantime chính thức làm nền tảng
+FROM docker.io/leantime/leantime:latest
 
-# 2. Chép đè các thư mục chứa code bạn đã custom vào bên trong Container
-COPY ./src/ /var/www/html/src/
-COPY ./public/ /var/www/html/public/
+# 2. Chỉ chép đè những thư mục chắc chắn tồn tại trong mã nguồn mới
 COPY ./app/ /var/www/html/app/
+COPY ./public/ /var/www/html/public/
 
-# 3. Phân quyền lại để hệ thống chạy mượt mà, không bị lỗi không đọc được file
+# Nếu bạn có ý định sửa giao diện (HTML/CSS), nó sẽ nằm ở thư mục resources, hãy copy thêm:
+COPY ./resources/ /var/www/html/resources/
+
+# 3. Phân quyền lại để tránh lỗi không đọc được file
 RUN chown -R www-data:www-data /var/www/html/
